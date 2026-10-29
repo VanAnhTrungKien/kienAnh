@@ -65,5 +65,5 @@ assets/
 
 - Ảnh cưới đã được tối ưu WebP; toàn bộ ảnh nằm trong `assets/img/`.
 - Album carousel hiển thị đủ 36 ảnh trong `assets/img` (đã bỏ các ảnh ghép), sắp xếp ảnh vest/váy cưới trước, ảnh quần áo thường sau. Chạm vào ảnh ở giữa để xem lớn.
-- Sổ lưu bút và xác nhận tham dự đang lưu trên thiết bị của khách (localStorage).
+- Sổ lưu bút và xác nhận tham dự được đồng bộ qua Google Sheet khi đã cấu hình Apps Script; bản local vẫn giữ để dự phòng.
 - Hộp quà mừng sẽ hiển thị khi điền thông tin ngân hàng trong `assets/js/main.js`.

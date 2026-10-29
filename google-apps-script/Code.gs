@@ -41,7 +41,22 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+function doGet(e) {
+  var params = (e && e.parameter) || {};
+
+  if (params.action === "wishes") {
+    var payload = { ok: true, wishes: getWishes_() };
+    var callback = String(params.callback || "");
+
+    if (/^[A-Za-z_$][0-9A-Za-z_$]*$/.test(callback)) {
+      return ContentService
+        .createTextOutput(callback + "(" + JSON.stringify(payload) + ");")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+
+    return json_(payload);
+  }
+
   return json_({ ok: true, service: "wedding-rsvp" });
 }
 
@@ -123,6 +138,31 @@ function getWishSheet_() {
   ]);
 }
 
+function getWishes_() {
+  var sheet = getWishSheet_();
+  var last = sheet.getLastRow();
+
+  if (last < 2) {
+    return [];
+  }
+
+  var rows = sheet.getRange(2, 1, last - 1, 4).getValues();
+  return rows
+    .map(function (row) {
+      var parsed = row[0] instanceof Date ? row[0].getTime() : new Date(row[0]).getTime();
+      return {
+        time: isNaN(parsed) ? 0 : parsed,
+        name: String(row[1] || "").trim(),
+        wish: String(row[2] || "").trim()
+      };
+    })
+    .filter(function (item) {
+      return item.name && item.wish;
+    })
+    .slice(-30)
+    .reverse();
+}
+
 function getSheet_(name, headers) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(name);
@@ -161,18 +201,43 @@ function ensureSummary_() {
     ["Số lời chúc"]
   ];
 
-  var formulas = [
-    ["=COUNTA(RSVP!B2:B)"],
-    ["=SUM(RSVP!D2:D)"],
-    ['=SUMPRODUCT(--(RSVP!C2:C="Có"))'],
-    ['=SUMPRODUCT(--(RSVP!C2:C="Có thể"))'],
-    ['=SUMPRODUCT(--(RSVP!C2:C="Không"))'],
-    ["=COUNTA(Wishes!B2:B)"]
+  var rsvpSheet = getRsvpSheet_();
+  var wishSheet = getWishSheet_();
+  var rsvpRows = Math.max(0, rsvpSheet.getLastRow() - 1);
+  var yes = 0;
+  var maybe = 0;
+  var no = 0;
+  var attendees = 0;
+
+  if (rsvpRows > 0) {
+    var rsvpData = rsvpSheet.getRange(2, 3, rsvpRows, 2).getValues();
+    rsvpData.forEach(function (row) {
+      var attend = String(row[0] || "").trim();
+      var count = Number(row[1]) || 0;
+
+      if (attend === "Có") {
+        yes += 1;
+      } else if (attend === "Có thể") {
+        maybe += 1;
+      } else if (attend === "Không") {
+        no += 1;
+      }
+      attendees += count;
+    });
+  }
+
+  var values = [
+    [rsvpRows],
+    [attendees],
+    [yes],
+    [maybe],
+    [no],
+    [Math.max(0, wishSheet.getLastRow() - 1)]
   ];
 
   sheet.getRange(4, 1, labels.length, 1).setValues(labels);
-  sheet.getRange(4, 2, formulas.length, 1).setFormulas(formulas);
-  sheet.getRange(4, 2, formulas.length, 1).setNumberFormat("0");
+  sheet.getRange(4, 2, values.length, 1).setValues(values);
+  sheet.getRange(4, 2, values.length, 1).setNumberFormat("0");
   sheet.autoResizeColumns(1, 2);
 
   return sheet;

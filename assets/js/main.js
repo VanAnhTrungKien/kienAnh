@@ -137,7 +137,7 @@
     }
     if (wishNote) {
       wishNote.textContent = GUESTBOOK_ENDPOINT
-        ? "Lời chúc sẽ được gửi đến cô dâu."
+        ? "Lời chúc sẽ được gửi đến cô dâu và hiển thị cho mọi người."
         : "Lời chúc được lưu trên thiết bị của bạn.";
     }
   }
@@ -1245,6 +1245,72 @@
     });
   }
 
+  function mergeWishes(remote, local) {
+    var merged = [];
+    var seen = {};
+
+    (remote || []).concat(local || []).forEach(function (wish) {
+      var name = String(wish.name || "").trim();
+      var text = String(wish.wish || "").trim();
+
+      if (!name || !text) {
+        return;
+      }
+
+      var key = name + "\u0000" + text;
+      if (seen[key]) {
+        return;
+      }
+      seen[key] = true;
+      merged.push({
+        name: name,
+        wish: text,
+        time: Number(wish.time) || 0
+      });
+    });
+
+    return merged;
+  }
+
+  function loadRemoteWishes() {
+    if (!GUESTBOOK_ENDPOINT) {
+      return;
+    }
+
+    var callbackName = "weddingWishes" + Date.now() + Math.floor(Math.random() * 1000);
+    var script = document.createElement("script");
+    var timeout = window.setTimeout(cleanup, 8000);
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      try {
+        delete window[callbackName];
+      } catch (err) {
+        window[callbackName] = undefined;
+      }
+    }
+
+    window[callbackName] = function (payload) {
+      cleanup();
+      if (!payload || !Array.isArray(payload.wishes)) {
+        return;
+      }
+      wishesCache = mergeWishes(payload.wishes, loadWishes());
+      renderWishes(wishesCache);
+    };
+
+    script.onerror = cleanup;
+    script.src =
+      GUESTBOOK_ENDPOINT +
+      (GUESTBOOK_ENDPOINT.indexOf("?") === -1 ? "?" : "&") +
+      "action=wishes&callback=" +
+      encodeURIComponent(callbackName);
+    document.body.appendChild(script);
+  }
+
   if (wishForm) {
     wishForm.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -1271,6 +1337,7 @@
       writeStore(WISH_KEY, wishesCache);
 
       postForm(GUESTBOOK_ENDPOINT, entry).catch(function () {});
+      window.setTimeout(loadRemoteWishes, 1500);
 
       wishForm.reset();
       renderWishes(wishesCache);
@@ -1290,6 +1357,10 @@
 
   wishesCache = loadWishes();
   renderWishes(wishesCache);
+  loadRemoteWishes();
+  if (GUESTBOOK_ENDPOINT) {
+    window.setInterval(loadRemoteWishes, 45000);
+  }
 
   /* ----------------------------------------------------------------------
      Keyboard shortcuts for the carousel dots
