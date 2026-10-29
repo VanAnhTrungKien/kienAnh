@@ -20,7 +20,7 @@ Mở `http://localhost:4173`.
 Mở `tao-thiep.html` để nhập tên khách/cặp đôi và tạo link gửi riêng. Link có dạng `index.html?guest=...`; tên sẽ hiện ở dòng “Thân mời” trên bìa thiệp.
 
 - Local: `http://localhost:4173/tao-thiep.html`
-- Online: `https://giaduoc0211.github.io/thiepcuoiVananh/tao-thiep.html`
+- Online: `https://vananhtrungkien.github.io/kienAnh/tao-thiep.html`
 
 ## Nhận xác nhận tham dự bằng Google Sheet
 

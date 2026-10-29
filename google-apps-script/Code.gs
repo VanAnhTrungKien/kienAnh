@@ -164,9 +164,9 @@ function ensureSummary_() {
   var formulas = [
     ["=COUNTA(RSVP!B2:B)"],
     ["=SUM(RSVP!D2:D)"],
-    ['=COUNTIF(RSVP!C2:C,"Có")'],
-    ['=COUNTIF(RSVP!C2:C,"Có thể")'],
-    ['=COUNTIF(RSVP!C2:C,"Không")'],
+    ['=SUMPRODUCT(--(RSVP!C2:C="Có"))'],
+    ['=SUMPRODUCT(--(RSVP!C2:C="Có thể"))'],
+    ['=SUMPRODUCT(--(RSVP!C2:C="Không"))'],
     ["=COUNTA(Wishes!B2:B)"]
   ];
 

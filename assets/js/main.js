@@ -149,7 +149,8 @@
   var musicHost = document.getElementById("musicPlayer");
   var ytPlayer = null;
   var ytReady = false;
-  var musicWanted = false;
+  var musicWanted = true;
+  var musicPausedByUser = false;
 
   function setMusicPlaying(playing) {
     if (!musicToggle) {
@@ -170,7 +171,7 @@
       width: "1",
       videoId: YT_VIDEO_ID,
       playerVars: {
-        autoplay: 0,
+        autoplay: 1,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -186,7 +187,7 @@
           if (typeof ytPlayer.setVolume === "function") {
             ytPlayer.setVolume(35);
           }
-          if (musicWanted) {
+          if (musicWanted && !musicPausedByUser) {
             ytPlayer.playVideo();
           }
         },
@@ -212,6 +213,7 @@
 
   function playBackgroundMusic() {
     musicWanted = true;
+    musicPausedByUser = false;
     ensureMusicPlayer();
     if (ytPlayer && ytReady) {
       ytPlayer.playVideo();
@@ -220,10 +222,24 @@
 
   function pauseBackgroundMusic() {
     musicWanted = false;
+    musicPausedByUser = true;
     if (ytPlayer && ytReady) {
       ytPlayer.pauseVideo();
     }
     setMusicPlaying(false);
+  }
+
+  function unlockBackgroundMusic(event) {
+    if (event && event.target && event.target.closest && event.target.closest("#musicToggle")) {
+      return;
+    }
+    if (!musicWanted || musicPausedByUser) {
+      return;
+    }
+    ensureMusicPlayer();
+    if (ytPlayer && ytReady && ytPlayer.getPlayerState() !== 1) {
+      ytPlayer.playVideo();
+    }
   }
 
   if (musicToggle) {
@@ -236,8 +252,14 @@
     });
   }
 
-  window.addEventListener("youtube-api-ready", ensureMusicPlayer);
+  window.addEventListener("youtube-api-ready", function () {
+    ensureMusicPlayer();
+    unlockBackgroundMusic();
+  });
+  document.addEventListener("pointerdown", unlockBackgroundMusic, { passive: true });
+  document.addEventListener("keydown", unlockBackgroundMusic);
   ensureMusicPlayer();
+  unlockBackgroundMusic();
 
   /* ----------------------------------------------------------------------
      Cover
@@ -297,7 +319,9 @@
       return;
     }
 
-    playBackgroundMusic();
+    if (!musicPausedByUser) {
+      playBackgroundMusic();
+    }
 
     cover.setAttribute("aria-hidden", "true");
     cover.inert = true;
