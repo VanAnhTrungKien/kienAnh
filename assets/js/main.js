@@ -144,6 +144,101 @@
 
   updateEndpointNotes();
 
+  var YT_VIDEO_ID = "0Q8KsWGQn2E";
+  var musicToggle = document.getElementById("musicToggle");
+  var musicHost = document.getElementById("musicPlayer");
+  var ytPlayer = null;
+  var ytReady = false;
+  var musicWanted = false;
+
+  function setMusicPlaying(playing) {
+    if (!musicToggle) {
+      return;
+    }
+    musicToggle.classList.toggle("is-playing", playing);
+    musicToggle.setAttribute("aria-pressed", playing ? "true" : "false");
+    musicToggle.setAttribute("aria-label", playing ? "Tắt nhạc nền" : "Bật nhạc nền");
+  }
+
+  function ensureMusicPlayer() {
+    if (ytPlayer || !musicHost || !window.YT || typeof window.YT.Player !== "function") {
+      return;
+    }
+
+    ytPlayer = new window.YT.Player("musicPlayer", {
+      height: "1",
+      width: "1",
+      videoId: YT_VIDEO_ID,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        loop: 1,
+        playlist: YT_VIDEO_ID,
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 1
+      },
+      events: {
+        onReady: function () {
+          ytReady = true;
+          if (typeof ytPlayer.setVolume === "function") {
+            ytPlayer.setVolume(35);
+          }
+          if (musicWanted) {
+            ytPlayer.playVideo();
+          }
+        },
+        onStateChange: function (event) {
+          if (!window.YT || !window.YT.PlayerState) {
+            return;
+          }
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            setMusicPlaying(true);
+          } else if (
+            event.data === window.YT.PlayerState.PAUSED ||
+            event.data === window.YT.PlayerState.ENDED
+          ) {
+            setMusicPlaying(false);
+          }
+        },
+        onError: function () {
+          setMusicPlaying(false);
+        }
+      }
+    });
+  }
+
+  function playBackgroundMusic() {
+    musicWanted = true;
+    ensureMusicPlayer();
+    if (ytPlayer && ytReady) {
+      ytPlayer.playVideo();
+    }
+  }
+
+  function pauseBackgroundMusic() {
+    musicWanted = false;
+    if (ytPlayer && ytReady) {
+      ytPlayer.pauseVideo();
+    }
+    setMusicPlaying(false);
+  }
+
+  if (musicToggle) {
+    musicToggle.addEventListener("click", function () {
+      if (ytPlayer && ytReady && ytPlayer.getPlayerState() === 1) {
+        pauseBackgroundMusic();
+      } else {
+        playBackgroundMusic();
+      }
+    });
+  }
+
+  window.addEventListener("youtube-api-ready", ensureMusicPlayer);
+  ensureMusicPlayer();
+
   /* ----------------------------------------------------------------------
      Cover
      ---------------------------------------------------------------------- */
@@ -201,6 +296,8 @@
     if (!cover || coverOpened) {
       return;
     }
+
+    playBackgroundMusic();
 
     cover.setAttribute("aria-hidden", "true");
     cover.inert = true;

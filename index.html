@@ -31,6 +31,12 @@
   <script src="assets/js/config.js" defer></script>
   <script src="assets/js/photos.js" defer></script>
   <script src="assets/js/main.js" defer></script>
+  <script>
+    window.onYouTubeIframeAPIReady = function () {
+      window.dispatchEvent(new Event("youtube-api-ready"));
+    };
+  </script>
+  <script src="https://www.youtube.com/iframe_api" async></script>
 
   <noscript>
     <style>
@@ -95,6 +101,12 @@
 
       <symbol id="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/>
+      </symbol>
+
+      <symbol id="icon-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 17V5l10-2v12"/>
+        <circle cx="6" cy="17" r="3"/>
+        <circle cx="16" cy="15" r="3"/>
       </symbol>
 
       <symbol id="floral-branch" viewBox="0 0 320 620">
@@ -366,6 +378,11 @@
       </section>
     </main>
   </div>
+
+  <button class="music-toggle" id="musicToggle" type="button" aria-label="Bật nhạc nền" aria-pressed="false">
+    <svg class="icon" aria-hidden="true"><use href="#icon-music"></use></svg>
+  </button>
+  <div class="music-player" id="musicPlayer" aria-hidden="true"></div>
 
   <div class="modal" id="rsvpModal" hidden>
     <div class="modal__scrim" data-close></div>
