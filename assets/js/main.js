@@ -1186,6 +1186,7 @@
   var wishesEl = document.getElementById("wishes");
   var wishFocus = document.getElementById("wishFocus");
   var wishesCache = null;
+  var pendingWishes = [];
 
   function loadWishes() {
     var list = readStore(WISH_KEY, []);
@@ -1272,6 +1273,16 @@
     return merged;
   }
 
+  function mergeRemoteWishes(remote) {
+    pendingWishes = pendingWishes.filter(function (pending) {
+      return !remote.some(function (item) {
+        return item.name === pending.name && item.wish === pending.wish;
+      });
+    });
+    wishesCache = mergeWishes(remote, pendingWishes);
+    renderWishes(wishesCache);
+  }
+
   function loadRemoteWishes() {
     if (!GUESTBOOK_ENDPOINT) {
       return;
@@ -1298,8 +1309,7 @@
       if (!payload || !Array.isArray(payload.wishes)) {
         return;
       }
-      wishesCache = mergeWishes(payload.wishes, loadWishes());
-      renderWishes(wishesCache);
+      mergeRemoteWishes(payload.wishes);
     };
 
     script.onerror = cleanup;
@@ -1331,6 +1341,7 @@
         time: Date.now()
       };
 
+      pendingWishes.unshift(entry);
       var list = loadWishes();
       list.unshift(entry);
       wishesCache = list.slice(0, 50);
