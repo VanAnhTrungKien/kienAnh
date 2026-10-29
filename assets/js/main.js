@@ -145,6 +145,7 @@
   updateEndpointNotes();
 
   var YT_VIDEO_ID = "0Q8KsWGQn2E";
+  var MUSIC_START_SECONDS = 10;
   var musicToggle = document.getElementById("musicToggle");
   var musicHost = document.getElementById("musicPlayer");
   var ytPlayer = null;
@@ -175,8 +176,8 @@
         controls: 0,
         disablekb: 1,
         fs: 0,
-        loop: 1,
-        playlist: YT_VIDEO_ID,
+        start: MUSIC_START_SECONDS,
+        loop: 0,
         playsinline: 1,
         rel: 0,
         modestbranding: 1
@@ -188,6 +189,9 @@
             ytPlayer.setVolume(35);
           }
           if (musicWanted && !musicPausedByUser) {
+            if (typeof ytPlayer.seekTo === "function") {
+              ytPlayer.seekTo(MUSIC_START_SECONDS, true);
+            }
             ytPlayer.playVideo();
           }
         },
@@ -197,11 +201,15 @@
           }
           if (event.data === window.YT.PlayerState.PLAYING) {
             setMusicPlaying(true);
-          } else if (
-            event.data === window.YT.PlayerState.PAUSED ||
-            event.data === window.YT.PlayerState.ENDED
-          ) {
+          } else if (event.data === window.YT.PlayerState.PAUSED) {
             setMusicPlaying(false);
+          } else if (event.data === window.YT.PlayerState.ENDED) {
+            if (musicWanted && !musicPausedByUser) {
+              ytPlayer.seekTo(MUSIC_START_SECONDS, true);
+              ytPlayer.playVideo();
+            } else {
+              setMusicPlaying(false);
+            }
           }
         },
         onError: function () {
@@ -216,6 +224,9 @@
     musicPausedByUser = false;
     ensureMusicPlayer();
     if (ytPlayer && ytReady) {
+      if (ytPlayer.getCurrentTime() < 1) {
+        ytPlayer.seekTo(MUSIC_START_SECONDS, true);
+      }
       ytPlayer.playVideo();
     }
   }
@@ -238,6 +249,9 @@
     }
     ensureMusicPlayer();
     if (ytPlayer && ytReady && ytPlayer.getPlayerState() !== 1) {
+      if (ytPlayer.getCurrentTime() < 1) {
+        ytPlayer.seekTo(MUSIC_START_SECONDS, true);
+      }
       ytPlayer.playVideo();
     }
   }
